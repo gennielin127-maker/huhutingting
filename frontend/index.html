@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="呼呼叮叮">
+<title>呼呼叮叮</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: #f8f0f3; min-height: 100vh; display: flex; justify-content: center; }
+.app { width: 100%; max-width: 430px; background: #f8f0f3; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+.screen { flex: 1; overflow-y: auto; padding: 16px 16px 80px; display: none; }
+.screen.active { display: block; }
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; display: flex; border-top: 0.5px solid #e8d0da; background: white; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 4px 6px; cursor: pointer; gap: 3px; border: none; background: none; }
+.nav-label { font-size: 10px; color: #999; }
+.nav-item.active .nav-label { color: #D4537E; }
+.nav-svg { width: 26px; height: 26px; }
+
+.days-banner { background: white; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 8px rgba(212,83,126,0.08); }
+.days-num { font-size: 28px; font-weight: 600; line-height: 1; color: #333; }
+.days-unit { font-size: 12px; color: #999; margin-top: 2px; }
+.days-right { text-align: right; font-size: 12px; color: #999; line-height: 1.8; }
+
+.cal-section { background: white; border-radius: 16px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 8px rgba(212,83,126,0.08); }
+.month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.month-label { font-size: 14px; font-weight: 600; }
+.nbtn { background: none; border: none; cursor: pointer; font-size: 22px; color: #bbb; padding: 2px 8px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dh { font-size: 10px; color: #bbb; text-align: center; padding: 2px 0; }
+.dc { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; gap: 0; padding: 1px; }
+.dc:hover { background: #fce8f0; }
+.dc.today .dn { color: #D4537E; font-weight: 700; }
+.dc.has-data { background: #fff0f5; }
+.dc.has-data:hover { background: #fcd8e8; }
+.dn { font-size: 9px; color: #aaa; line-height: 1; }
+.dc-icons { display: flex; gap: 0; align-items: center; flex-wrap: wrap; justify-content: center; }
+
+.day-detail { background: white; border-radius: 16px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 8px rgba(212,83,126,0.08); }
+.dd-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #D4537E; }
+.dd-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 0.5px solid #f0e0e8; }
+.dd-row:last-child { border-bottom: none; }
+.dd-ic { flex-shrink: 0; width: 26px; display: flex; align-items: center; justify-content: center; }
+.dd-info { flex: 1; }
+.dd-lbl { font-size: 11px; color: #bbb; }
+.dd-val { font-size: 13px; margin-top: 2px; color: #333; }
+
+.card { background: white; border-radius: 16px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 8px rgba(212,83,126,0.08); }
+.ph { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.pt { font-size: 17px; font-weight: 600; }
+.field { margin-bottom: 12px; }
+.lbl { font-size: 12px; color: #999; margin-bottom: 5px; display: block; }
+input[type=text], input[type=date], textarea {
+  width: 100%; border: 1px solid #f0e0e8; border-radius: 10px;
+  padding: 8px 12px; font-size: 13px; font-family: inherit;
+  background: #fdf8fa; color: #333; outline: none;
+}
+input[type=text]:focus, input[type=date]:focus, textarea:focus { border-color: #ED93B1; }
+textarea { resize: none; height: 64px; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { padding: 5px 12px; border-radius: 20px; border: 1px solid #f0d0da; font-size: 12px; cursor: pointer; background: white; color: #666; font-family: inherit; display: flex; align-items: center; gap: 4px; }
+.chip.on { background: #FBEAF0; border-color: #ED93B1; color: #993556; }
+.sbtn { width: 100%; padding: 11px; border-radius: 12px; background: #FBEAF0; border: 1px solid #ED93B1; color: #993556; font-size: 14px; cursor: pointer; font-family: inherit; font-weight: 500; }
+.sbtn:hover { background: #F4C0D1; }
+.sbtn.sm { width: auto; padding: 7px 14px; font-size: 12px; }
+.ok-msg { text-align: center; font-size: 13px; color: #993556; margin-top: 8px; display: none; }
+
+.person-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pname { font-size: 13px; font-weight: 600; }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; }
+.bf { background: #FBEAF0; color: #993556; }
+.bm { background: #E6F1FB; color: #185FA5; }
+.prev-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; min-height: 42px; }
+.prev-lbl { font-size: 13px; color: #bbb; }
+.mgrid { display: flex; flex-wrap: wrap; gap: 5px; }
+.mbtn { cursor: pointer; border-radius: 50%; border: 2px solid transparent; padding: 2px; display: inline-flex; }
+.mbtn:hover { border-color: #ED93B1; }
+.mbtn.sf { border-color: #D4537E; }
+.mbtn.sm2 { border-color: #378ADD; }
+.divider { border: none; border-top: 0.5px solid #f0e0e8; margin: 12px 0; }
+.res-box { margin-top: 12px; border-top: 0.5px solid #f0e0e8; padding-top: 10px; display: none; }
+.res-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+.res-lbl { font-size: 13px; color: #999; width: 40px; }
+.res-mood { font-size: 13px; color: #333; }
+
+.mem-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.mem-btn { cursor: pointer; border-radius: 10px; border: 2px solid transparent; padding: 3px; display: flex; align-items: center; justify-content: center; }
+.mem-btn:hover { border-color: #ED93B1; background: #fdf0f5; }
+.mem-btn.on { border-color: #D4537E; background: #FBEAF0; }
+
+.wish-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid #f0e0e8; }
+.wish-item:last-child { border-bottom: none; }
+.wi { flex: 1; }
+.wn { font-size: 13px; color: #333; }
+.wn.done { text-decoration: line-through; color: #ccc; }
+.wd { font-size: 11px; color: #bbb; margin-top: 2px; }
+.wck { cursor: pointer; padding: 4px; font-size: 18px; }
+
+.fi { padding: 10px 0; border-bottom: 0.5px solid #f0e0e8; }
+.fi:last-child { border-bottom: none; }
+.ft { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.ftopic { font-size: 13px; font-weight: 500; color: #333; }
+.ftags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.ftag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+.tp { background: #FBEAF0; color: #993556; }
+.tg { background: #EAF3DE; color: #3B6D11; }
+.tgr { background: #f5f5f5; color: #999; }
+
+.empty { text-align: center; padding: 32px 0; color: #ccc; font-size: 13px; }
+.loading { text-align: center; padding: 20px 0; color: #D4537E; font-size: 13px; }
+.sync-indicator { position: fixed; top: 12px; right: 12px; font-size: 11px; color: #D4537E; background: #FBEAF0; padding: 4px 10px; border-radius: 20px; display: none; z-index: 200; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sync-indicator" id="syncInd">同步中...</div>
+
+  <div class="screen active" id="s-home">
+    <div class="days-banner">
+      <div>
+        <div style="font-size:12px;color:#bbb">在一起</div>
+        <div class="days-num" id="daysNum">0</div>
+        <div class="days-unit">天</div>
+      </div>
+      <div class="days-right" id="annivText"></div>
+    </div>
+    <div class="cal-section">
+      <div class="month-nav">
+        <button class="nbtn" onclick="chMo(-1)">‹</button>
+        <span class="month-label" id="moLbl"></span>
+        <button class="nbtn" onclick="chMo(1)">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div id="ddBox" style="display:none"></div>
+  </div>
+
+  <div class="screen" id="s-mood">
+    <div class="ph"><span class="pt">今日心情</span></div>
+    <div class="card">
+      <div class="person-row"><span class="pname">林怡廷</span><span class="badge bf">女生版</span></div>
+      <div class="prev-row"><div id="preF" style="width:40px;height:40px"></div><span class="prev-lbl" id="nameF">請選心情</span></div>
+      <div class="mgrid" id="gridF"></div>
+      <div class="divider"></div>
+      <div class="person-row"><span class="pname">胡福堯</span><span class="badge bm">男生版</span></div>
+      <div class="prev-row"><div id="preM" style="width:40px;height:40px"></div><span class="prev-lbl" id="nameM">請選心情</span></div>
+      <div class="mgrid" id="gridM"></div>
+      <button class="sbtn" style="margin-top:8px" onclick="saveMood()">記錄今天心情</button>
+      <div class="ok-msg" id="moodOk">已記錄！</div>
+      <div class="res-box" id="resBox"><div id="resRows"></div></div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-memory">
+    <div class="ph"><span class="pt">新增回憶</span></div>
+    <div class="card">
+      <div class="field"><span class="lbl">日期</span><input type="date" id="memDate"></div>
+      <div class="field"><span class="lbl">這是什麼時刻</span><input type="text" id="memTitle" placeholder="例如：第一次一起看電影"></div>
+      <div class="field"><span class="lbl">選一個符號</span><div class="mem-grid" id="memPick"></div></div>
+      <div class="field"><span class="lbl">備註</span><textarea id="memNote" placeholder="記錄更多細節..."></textarea></div>
+      <button class="sbtn" onclick="saveMemory()">記錄這個時刻 ✨</button>
+      <div class="ok-msg" id="memOk">已記錄！</div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-wish">
+    <div class="ph"><span class="pt">願望清單</span><button class="sbtn sm" onclick="togWF()">+ 新增</button></div>
+    <div class="card" id="wishForm" style="display:none">
+      <div class="field"><span class="lbl">想一起做什麼</span><input type="text" id="wishTitle" placeholder="例如：去京都旅行"></div>
+      <div class="field"><span class="lbl">分類</span><div class="chips" id="wishCatChips"></div></div>
+      <div class="field"><span class="lbl">許願日期</span><input type="date" id="wishDate"></div>
+      <button class="sbtn" onclick="saveWish()">許下願望</button>
+      <div class="ok-msg" id="wishOk">已記錄！</div>
+    </div>
+    <div class="card" id="wishList"></div>
+  </div>
+
+  <div class="screen" id="s-fight">
+    <div class="ph"><span class="pt">吵架紀錄</span><button class="sbtn sm" onclick="togFF()">+ 新增</button></div>
+    <div class="card" id="fightForm" style="display:none">
+      <div class="field"><span class="lbl">日期</span><input type="date" id="fightDate"></div>
+      <div class="field"><span class="lbl">吵架主題（可多選）</span>
+        <div class="chips">
+          <button class="chip" onclick="togT(this,'溝通')">溝通</button>
+          <button class="chip" onclick="togT(this,'時間')">時間</button>
+          <button class="chip" onclick="togT(this,'嫉妒')">嫉妒</button>
+          <button class="chip" onclick="togT(this,'習慣')">習慣</button>
+          <button class="chip" onclick="togT(this,'誤會')">誤會</button>
+          <button class="chip" onclick="togT(this,'其他')">其他</button>
+        </div>
+      </div>
+      <div class="field"><span class="lbl">誰的錯</span>
+        <div class="chips">
+          <button class="chip" onclick="setSi(this,'fault','怡廷')">怡廷</button>
+          <button class="chip" onclick="setSi(this,'fault','福堯')">福堯</button>
+          <button class="chip" onclick="setSi(this,'fault','都有')">都有</button>
+        </div>
+      </div>
+      <div class="field"><span class="lbl">有沒有解決</span>
+        <div class="chips">
+          <button class="chip" onclick="setSi(this,'resolved','yes')">解決了 ✓</button>
+          <button class="chip" onclick="setSi(this,'resolved','no')">還沒</button>
+          <button class="chip" onclick="setSi(this,'resolved','partial')">部分解決</button>
+        </div>
+      </div>
+      <div class="field"><span class="lbl">嚴重程度</span><div style="display:flex;gap:6px;margin-top:4px" id="fStars"></div></div>
+      <div class="field"><span class="lbl">備註</span><textarea id="fightNote" placeholder="記錄一下細節..."></textarea></div>
+      <button class="sbtn" onclick="saveFight()">記錄這次吵架</button>
+      <div class="ok-msg" id="fightOk">已記錄！</div>
+    </div>
+    <div class="card" id="fightList"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="goTo('home')" id="nav-home">
+      <svg class="nav-svg" viewBox="0 0 32 32"><rect x="4" y="15" width="24" height="15" rx="4" fill="#FFDDE8"/><polygon points="16,4 2,17 30,17" fill="#FFB3CC"/><rect x="12" y="21" width="8" height="9" rx="3" fill="#FF85AB"/></svg>
+      <span class="nav-label">首頁</span>
+    </button>
+    <button class="nav-item" onclick="goTo('mood')" id="nav-mood">
+      <svg class="nav-svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#FFE0A0"/><ellipse cx="12" cy="14" rx="2" ry="2.2" fill="#7A5C00"/><ellipse cx="20" cy="14" rx="2" ry="2.2" fill="#7A5C00"/><path d="M11 20 Q16 25 21 20" stroke="#7A5C00" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#FFB3B3" opacity="0.7"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#FFB3B3" opacity="0.7"/></svg>
+      <span class="nav-label">心情</span>
+    </button>
+    <button class="nav-item" onclick="goTo('memory')" id="nav-memory">
+      <svg class="nav-svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#FFF0A0"/><polygon points="16,6 17.5,12 23,12 18.5,15.5 20,21 16,18 12,21 13.5,15.5 9,12 14.5,12" fill="#FFD700"/></svg>
+      <span class="nav-label">回憶</span>
+    </button>
+    <button class="nav-item" onclick="goTo('wish')" id="nav-wish">
+      <svg class="nav-svg" viewBox="0 0 32 32"><ellipse cx="16" cy="18" rx="5" ry="5" fill="#FFB7C5"/><ellipse cx="16" cy="10" rx="4" ry="5" fill="#FF85AB"/><ellipse cx="9" cy="14" rx="4" ry="3" fill="#FFB7C5" transform="rotate(-40 9 14)"/><ellipse cx="23" cy="14" rx="4" ry="3" fill="#FFB7C5" transform="rotate(40 23 14)"/><ellipse cx="9" cy="20" rx="4" ry="3" fill="#FFD6E0" transform="rotate(40 9 20)"/><ellipse cx="23" cy="20" rx="4" ry="3" fill="#FFD6E0" transform="rotate(-40 23 20)"/><circle cx="16" cy="17" r="3" fill="#FF6B9D"/><rect x="15" y="22" width="2" height="6" rx="1" fill="#7DC67A"/></svg>
+      <span class="nav-label">願望</span>
+    </button>
+    <button class="nav-item" onclick="goTo('fight')" id="nav-fight">
+      <svg class="nav-svg" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/><path d="M16 26 C13 21 11 18 12 15 C13 12 15 11 16 13 C17 11 19 12 20 15 C21 18 19 21 16 26Z" fill="#FFD700"/></svg>
+      <span class="nav-label">吵架</span>
+    </button>
+  </div>
+</div>
+
+<script>
+// ★ 部署後把這個換成你的 Render URL
+var API = 'https://huhutingting-api.onrender.com';
+
+var S=new Date('2025-01-30'),T=new Date();T.setHours(0,0,0,0);
+var tod=T.toISOString().split('T')[0];
+var vY=T.getFullYear(),vM=T.getMonth();
+document.getElementById('daysNum').textContent=Math.floor((T-S)/86400000);
+var nA=new Date(S);nA.setFullYear(T.getFullYear());
+if(nA<T)nA.setFullYear(T.getFullYear()+1);
+var dA=Math.floor((nA-T)/86400000);
+document.getElementById('annivText').innerHTML='紀念日 1/30<br>'+(dA===0?'今天！🎉':'還有 '+dA+' 天');
+
+function ms(w,h,c){return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">'+c+'</svg>';}
+
+var WISH_CATS=[
+  {id:'旅行',svg:'<svg width="18" height="18" viewBox="0 0 32 32"><path d="M6 16 L24 8 L26 10 L18 16 L26 22 L24 24 L16 18 L8 22 L9 18 Z" fill="#80C8F0"/></svg>'},
+  {id:'美食',svg:'<svg width="18" height="18" viewBox="0 0 32 32"><ellipse cx="16" cy="22" rx="11" ry="4" fill="#F5C97A"/><path d="M8 18 Q10 13 12 18 Q14 13 16 18 Q18 13 20 18 Q22 13 24 18" stroke="#E8A830" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'},
+  {id:'約會',svg:'<svg width="18" height="18" viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="16" rx="4" fill="#C9B8F5"/><polygon points="13,11 13,21 22,16" fill="#9B84E8"/></svg>'},
+  {id:'居家',svg:'<svg width="18" height="18" viewBox="0 0 32 32"><rect x="6" y="16" width="20" height="13" rx="3" fill="#FFDDE8"/><polygon points="16,5 3,18 29,18" fill="#FFB3CC"/><rect x="12" y="21" width="8" height="8" rx="2" fill="#FF85AB"/></svg>'},
+  {id:'其他',svg:'<svg width="18" height="18" viewBox="0 0 32 32"><polygon points="16,4 19,13 28,13 21,19 24,28 16,22 8,28 11,19 4,13 13,13" fill="#FFD700"/></svg>'},
+];
+var wCat='其他';
+var wcc=document.getElementById('wishCatChips');
+WISH_CATS.forEach(function(c){
+  var btn=document.createElement('button');
+  btn.className='chip'+(c.id===wCat?' on':'');
+  btn.innerHTML=c.svg+c.id;
+  btn.onclick=function(){wCat=c.id;document.querySelectorAll('#wishCatChips .chip').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');};
+  wcc.appendChild(btn);
+});
+
+var MF=[
+  {id:'happy_f',lb:'開心',f:'<circle cx="16" cy="16" r="14" fill="#F9C74F"/><ellipse cx="9" cy="19" rx="3" ry="2" fill="#FFB3B3" opacity="0.55"/><ellipse cx="23" cy="19" rx="3" ry="2" fill="#FFB3B3" opacity="0.55"/><ellipse cx="11" cy="15" rx="2" ry="2.5" fill="#333"/><ellipse cx="21" cy="15" rx="2" ry="2.5" fill="#333"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M10 20 Q16 25 22 20" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'love_f',lb:'戀愛',f:'<circle cx="16" cy="16" r="14" fill="#FF9B9B"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#FF7070" opacity="0.5"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#FF7070" opacity="0.5"/><ellipse cx="11" cy="14" rx="2" ry="2.5" fill="#333"/><ellipse cx="21" cy="14" rx="2" ry="2.5" fill="#333"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M13 19 Q16 23 19 19 Q19 16 16 18 Q13 16 13 19Z" fill="#e05555"/>'},
+  {id:'calm_f',lb:'平靜',f:'<circle cx="16" cy="16" r="14" fill="#B5EAD7"/><circle cx="11" cy="15" r="1.8" fill="#333"/><circle cx="21" cy="15" r="1.8" fill="#333"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M11 21 Q16 24 21 21" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'neutral_f',lb:'普通',f:'<circle cx="16" cy="16" r="14" fill="#E8E8E8"/><circle cx="11" cy="15" r="1.8" fill="#555"/><circle cx="21" cy="15" r="1.8" fill="#555"/><path d="M9 11 Q10 9 12 10" stroke="#555" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#555" stroke-width="1.2" fill="none" stroke-linecap="round"/><line x1="11" y1="21" x2="21" y2="21" stroke="#555" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'excited_f',lb:'興奮',f:'<circle cx="16" cy="16" r="14" fill="#FFD6FF"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#F9B3F9" opacity="0.6"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#F9B3F9" opacity="0.6"/><ellipse cx="11" cy="14" rx="2.5" ry="3" fill="#333"/><ellipse cx="21" cy="14" rx="2.5" ry="3" fill="#333"/><ellipse cx="11" cy="13" rx="1" ry="1" fill="white"/><ellipse cx="21" cy="13" rx="1" ry="1" fill="white"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M9 19 Q16 26 23 19" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>'},
+  {id:'angry_f',lb:'生氣',f:'<circle cx="16" cy="16" r="14" fill="#FFABAB"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#FF7070" opacity="0.5"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#FF7070" opacity="0.5"/><path d="M8 11 Q11 13 14 11" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 11 Q21 13 24 11" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="11" cy="15" r="2" fill="#333"/><circle cx="21" cy="15" r="2" fill="#333"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'cry_f',lb:'大哭',f:'<circle cx="16" cy="16" r="14" fill="#9CC5E0"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#70A8C8" opacity="0.5"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#70A8C8" opacity="0.5"/><ellipse cx="11" cy="14" rx="2" ry="2.5" fill="#333"/><ellipse cx="21" cy="14" rx="2" ry="2.5" fill="#333"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M10 17 Q9 20 11 23" stroke="#6ab0d0" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M22 17 Q23 20 21 23" stroke="#6ab0d0" stroke-width="2" fill="none" stroke-linecap="round"/>'},
+  {id:'sulk_f',lb:'委屈',f:'<circle cx="16" cy="16" r="14" fill="#C9D8F5"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#A0B8F0" opacity="0.5"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#A0B8F0" opacity="0.5"/><ellipse cx="11" cy="14" rx="2" ry="2.5" fill="#333"/><ellipse cx="21" cy="14" rx="2" ry="2.5" fill="#333"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="10" cy="22" rx="2.5" ry="1.5" fill="#A0B8F0" opacity="0.6"/><ellipse cx="22" cy="22" rx="2.5" ry="1.5" fill="#A0B8F0" opacity="0.6"/>'},
+  {id:'jealous_f',lb:'吃醋',f:'<circle cx="16" cy="16" r="14" fill="#FFCBA4"/><ellipse cx="9" cy="19" rx="3" ry="2" fill="#FF9060" opacity="0.5"/><ellipse cx="23" cy="19" rx="3" ry="2" fill="#FF9060" opacity="0.5"/><path d="M8 11 Q11 9 13 11" stroke="#FF6030" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 11 Q21 9 24 11" stroke="#FF6030" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="11" cy="15" r="2" fill="#333"/><circle cx="21" cy="15" r="2" fill="#333"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'tired_f',lb:'累了',f:'<circle cx="16" cy="16" r="14" fill="#FFDAC1"/><path d="M8 13 Q11 15 14 13" stroke="#555" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 13 Q21 15 24 13" stroke="#555" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M9 11 Q10 9 12 10" stroke="#555" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#555" stroke-width="1" fill="none" stroke-linecap="round"/><line x1="11" y1="21" x2="21" y2="21" stroke="#555" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'hungry_f',lb:'餓了',f:'<circle cx="16" cy="16" r="14" fill="#FFE0A0"/><ellipse cx="9" cy="19" rx="3" ry="2" fill="#FFB060" opacity="0.5"/><ellipse cx="23" cy="19" rx="3" ry="2" fill="#FFB060" opacity="0.5"/><circle cx="11" cy="15" r="2" fill="#333"/><circle cx="21" cy="15" r="2" fill="#333"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M11 19 Q14 23 16 19 Q18 23 21 19" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'sick_f',lb:'不舒服',f:'<circle cx="16" cy="16" r="14" fill="#D5E8D4"/><path d="M8 13 Q11 15 14 13" stroke="#555" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M18 13 Q21 15 24 13" stroke="#555" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M9 11 Q10 9 12 10" stroke="#555" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#555" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M12 22 Q14 20 16 22 Q18 24 20 22" stroke="#555" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="23" cy="9" r="3.5" fill="#A8D8A0"/>'},
+  {id:'surprise_f',lb:'驚喜',f:'<circle cx="16" cy="16" r="14" fill="#FFF0A0"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#FFD060" opacity="0.5"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#FFD060" opacity="0.5"/><ellipse cx="11" cy="14" rx="3" ry="3.5" fill="#333"/><ellipse cx="21" cy="14" rx="3" ry="3.5" fill="#333"/><ellipse cx="11" cy="13" rx="1.2" ry="1.2" fill="white"/><ellipse cx="21" cy="13" rx="1.2" ry="1.2" fill="white"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><ellipse cx="16" cy="22" rx="3" ry="2.5" fill="#333"/>'},
+  {id:'eyeroll_f',lb:'無奈',f:'<circle cx="16" cy="16" r="14" fill="#D8E8D0"/><ellipse cx="11" cy="15" rx="2.5" ry="3" fill="#333"/><ellipse cx="21" cy="15" rx="2.5" ry="3" fill="#333"/><ellipse cx="11" cy="13.5" rx="1.2" ry="1.8" fill="white"/><ellipse cx="21" cy="13.5" rx="1.2" ry="1.8" fill="white"/><path d="M9 11 Q10 9 12 10" stroke="#555" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#555" stroke-width="1.2" fill="none" stroke-linecap="round"/><line x1="11" y1="21" x2="21" y2="21" stroke="#555" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'shy_f',lb:'害羞',f:'<circle cx="16" cy="16" r="14" fill="#FFDDE8"/><circle cx="8" cy="20" r="4" fill="#FFB3CC" opacity="0.6"/><circle cx="24" cy="20" r="4" fill="#FFB3CC" opacity="0.6"/><path d="M9 14 Q11 12 13 14" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 14 Q21 12 23 14" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M9 11 Q10 9 12 10" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20 10 Q22 9 23 11" stroke="#333" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M12 21 Q16 24 20 21" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+];
+var MM=[
+  {id:'happy_m',lb:'開心',f:'<circle cx="16" cy="16" r="14" fill="#F0C060"/><ellipse cx="9" cy="19" rx="3" ry="2" fill="#E09040" opacity="0.4"/><ellipse cx="23" cy="19" rx="3" ry="2" fill="#E09040" opacity="0.4"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="15" rx="2.2" ry="2.5" fill="#222"/><ellipse cx="21" cy="15" rx="2.2" ry="2.5" fill="#222"/><path d="M10 20 Q16 25 22 20" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'love_m',lb:'戀愛',f:'<circle cx="16" cy="16" r="14" fill="#E08080"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#C05050" opacity="0.4"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#C05050" opacity="0.4"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="14" rx="2.2" ry="2.5" fill="#222"/><ellipse cx="21" cy="14" rx="2.2" ry="2.5" fill="#222"/><path d="M13 19 Q16 23 19 19 Q19 16 16 18 Q13 16 13 19Z" fill="#b03030"/>'},
+  {id:'calm_m',lb:'平靜',f:'<circle cx="16" cy="16" r="14" fill="#90D0B8"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="11" cy="15" r="2" fill="#222"/><circle cx="21" cy="15" r="2" fill="#222"/><path d="M11 21 Q16 24 21 21" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'neutral_m',lb:'普通',f:'<circle cx="16" cy="16" r="14" fill="#C8C8C8"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="11" cy="15" r="2" fill="#222"/><circle cx="21" cy="15" r="2" fill="#222"/><line x1="11" y1="21" x2="21" y2="21" stroke="#444" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'excited_m',lb:'興奮',f:'<circle cx="16" cy="16" r="14" fill="#D0B0FF"/><ellipse cx="9" cy="18" rx="3" ry="2" fill="#B080FF" opacity="0.5"/><ellipse cx="23" cy="18" rx="3" ry="2" fill="#B080FF" opacity="0.5"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="14" rx="2.5" ry="3" fill="#222"/><ellipse cx="21" cy="14" rx="2.5" ry="3" fill="#222"/><ellipse cx="11" cy="13" rx="1" ry="1" fill="white"/><ellipse cx="21" cy="13" rx="1" ry="1" fill="white"/><path d="M9 19 Q16 26 23 19" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>'},
+  {id:'angry_m',lb:'生氣',f:'<circle cx="16" cy="16" r="14" fill="#FF8888"/><path d="M8 11 Q11 13.5 14 11" stroke="#222" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M18 11 Q21 13.5 24 11" stroke="#222" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="16" r="2.2" fill="#222"/><circle cx="21" cy="16" r="2.2" fill="#222"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'cry_m',lb:'大哭',f:'<circle cx="16" cy="16" r="14" fill="#70A8D8"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="14" rx="2.2" ry="2.5" fill="#222"/><ellipse cx="21" cy="14" rx="2.2" ry="2.5" fill="#222"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M10 17 Q9 20 11 23" stroke="#4888b0" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M22 17 Q23 20 21 23" stroke="#4888b0" stroke-width="2" fill="none" stroke-linecap="round"/>'},
+  {id:'sulk_m',lb:'委屈',f:'<circle cx="16" cy="16" r="14" fill="#90A8E0"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="14" rx="2.2" ry="2.5" fill="#222"/><ellipse cx="21" cy="14" rx="2.2" ry="2.5" fill="#222"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="10" cy="22" rx="2.5" ry="1.5" fill="#7090C8" opacity="0.6"/><ellipse cx="22" cy="22" rx="2.5" ry="1.5" fill="#7090C8" opacity="0.6"/>'},
+  {id:'jealous_m',lb:'吃醋',f:'<circle cx="16" cy="16" r="14" fill="#E8A870"/><ellipse cx="9" cy="19" rx="3" ry="2" fill="#D07840" opacity="0.4"/><ellipse cx="23" cy="19" rx="3" ry="2" fill="#D07840" opacity="0.4"/><path d="M8 11 Q11 13 14 11" stroke="#883010" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M18 11 Q21 13 24 11" stroke="#883010" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="11" cy="15" r="2.2" fill="#222"/><circle cx="21" cy="15" r="2.2" fill="#222"/><path d="M10 22 Q16 18 22 22" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'tired_m',lb:'累了',f:'<circle cx="16" cy="16" r="14" fill="#E8C8A0"/><path d="M8 13 Q11 15 14 13" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 13 Q21 15 24 13" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><line x1="11" y1="21" x2="21" y2="21" stroke="#444" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'hungry_m',lb:'餓了',f:'<circle cx="16" cy="16" r="14" fill="#E8C860"/><ellipse cx="9" cy="19" rx="3" ry="2" fill="#D0A030" opacity="0.4"/><ellipse cx="23" cy="19" rx="3" ry="2" fill="#D0A030" opacity="0.4"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="11" cy="15" r="2.2" fill="#222"/><circle cx="21" cy="15" r="2.2" fill="#222"/><path d="M11 19 Q14 23 16 19 Q18 23 21 19" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+  {id:'sick_m',lb:'不舒服',f:'<circle cx="16" cy="16" r="14" fill="#B8D8B0"/><path d="M8 13 Q11 15 14 13" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M18 13 Q21 15 24 13" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M12 22 Q14 20 16 22 Q18 24 20 22" stroke="#444" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="23" cy="9" r="3.5" fill="#88C080"/>'},
+  {id:'surprise_m',lb:'驚喜',f:'<circle cx="16" cy="16" r="14" fill="#E8D860"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="14" rx="3" ry="3.5" fill="#222"/><ellipse cx="21" cy="14" rx="3" ry="3.5" fill="#222"/><ellipse cx="11" cy="13" rx="1.2" ry="1.2" fill="white"/><ellipse cx="21" cy="13" rx="1.2" ry="1.2" fill="white"/><ellipse cx="16" cy="22" rx="3" ry="2.5" fill="#333"/>'},
+  {id:'eyeroll_m',lb:'無奈',f:'<circle cx="16" cy="16" r="14" fill="#B0C8A0"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="15" rx="2.5" ry="3" fill="#222"/><ellipse cx="21" cy="15" rx="2.5" ry="3" fill="#222"/><ellipse cx="11" cy="13.5" rx="1.2" ry="1.8" fill="white"/><ellipse cx="21" cy="13.5" rx="1.2" ry="1.8" fill="white"/><line x1="11" y1="21" x2="21" y2="21" stroke="#444" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'shy_m',lb:'害羞',f:'<circle cx="16" cy="16" r="14" fill="#E0C8E8"/><circle cx="8" cy="20" r="4" fill="#C090D0" opacity="0.5"/><circle cx="24" cy="20" r="4" fill="#C090D0" opacity="0.5"/><path d="M9 10 Q11 8 13 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 10 Q21 8 23 10" stroke="#444" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M9 14 Q11 12 13 14" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M19 14 Q21 12 23 14" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M12 21 Q16 24 20 21" stroke="#333" stroke-width="1.8" fill="none" stroke-linecap="round"/>'},
+];
+
+var MI=[
+  {id:'film',s:'<svg viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="16" rx="4" fill="#C9B8F5"/><rect x="4" y="11" width="3" height="3" rx="1" fill="#9B84E8"/><rect x="4" y="16" width="3" height="3" rx="1" fill="#9B84E8"/><rect x="25" y="11" width="3" height="3" rx="1" fill="#9B84E8"/><rect x="25" y="16" width="3" height="3" rx="1" fill="#9B84E8"/><polygon points="13,11 13,21 22,16" fill="#9B84E8"/></svg>'},
+  {id:'noodle',s:'<svg viewBox="0 0 32 32"><ellipse cx="16" cy="22" rx="11" ry="5" fill="#F5C97A"/><path d="M8 18 Q10 12 12 18 Q14 12 16 18 Q18 12 20 18 Q22 12 24 18" stroke="#E8A830" stroke-width="2" fill="none" stroke-linecap="round"/></svg>'},
+  {id:'cake',s:'<svg viewBox="0 0 32 32"><rect x="6" y="16" width="20" height="12" rx="3" fill="#FFB7C5"/><rect x="9" y="12" width="14" height="6" rx="2" fill="#FFC8D3"/><rect x="14" y="6" width="4" height="7" rx="2" fill="#FFE0E8"/><ellipse cx="16" cy="6" rx="2" ry="2.5" fill="#FF6B9D"/></svg>'},
+  {id:'coffee',s:'<svg viewBox="0 0 32 32"><rect x="7" y="13" width="16" height="14" rx="4" fill="#C8A882"/><path d="M23 17 Q28 17 28 21 Q28 25 23 25" stroke="#A07850" stroke-width="2" fill="none"/><ellipse cx="15" cy="13" rx="8" ry="2" fill="#B08060"/></svg>'},
+  {id:'ferris',s:'<svg viewBox="0 0 32 32"><circle cx="16" cy="14" r="11" fill="none" stroke="#80C8F0" stroke-width="2"/><circle cx="16" cy="14" r="3" fill="#80C8F0"/><line x1="16" y1="3" x2="16" y2="25" stroke="#80C8F0" stroke-width="1.5"/><line x1="5" y1="14" x2="27" y2="14" stroke="#80C8F0" stroke-width="1.5"/><rect x="13" y="2" width="6" height="5" rx="2" fill="#B0E0FF"/></svg>'},
+  {id:'wave',s:'<svg viewBox="0 0 32 32"><path d="M4 18 Q7 13 10 18 Q13 23 16 18 Q19 13 22 18 Q25 23 28 18" stroke="#60C0E8" stroke-width="2.5" fill="none" stroke-linecap="round"/><circle cx="16" cy="10" r="5" fill="#FFE066"/></svg>'},
+  {id:'flower',s:'<svg viewBox="0 0 32 32"><ellipse cx="16" cy="9" rx="3.5" ry="5" fill="#FFB7C5"/><ellipse cx="16" cy="23" rx="3.5" ry="5" fill="#FFB7C5"/><ellipse cx="9" cy="16" rx="5" ry="3.5" fill="#FFB7C5"/><ellipse cx="23" cy="16" rx="5" ry="3.5" fill="#FFB7C5"/><ellipse cx="10.5" cy="10.5" rx="3.5" ry="5" fill="#FFD6E0" transform="rotate(45 10.5 10.5)"/><ellipse cx="21.5" cy="10.5" rx="3.5" ry="5" fill="#FFD6E0" transform="rotate(-45 21.5 10.5)"/><ellipse cx="10.5" cy="21.5" rx="3.5" ry="5" fill="#FFD6E0" transform="rotate(-45 10.5 21.5)"/><ellipse cx="21.5" cy="21.5" rx="3.5" ry="5" fill="#FFD6E0" transform="rotate(45 21.5 21.5)"/><circle cx="16" cy="16" r="5" fill="#FFE066"/></svg>'},
+  {id:'music',s:'<svg viewBox="0 0 32 32"><ellipse cx="10" cy="24" rx="4" ry="3" fill="#C9B8F5"/><ellipse cx="22" cy="21" rx="4" ry="3" fill="#C9B8F5"/><path d="M14 24 L14 9 L26 6 L26 21" stroke="#9B84E8" stroke-width="2" fill="none"/></svg>'},
+  {id:'home2',s:'<svg viewBox="0 0 32 32"><rect x="6" y="16" width="20" height="13" rx="3" fill="#FFDDE8"/><polygon points="16,5 3,18 29,18" fill="#FFB3CC"/><rect x="12" y="21" width="8" height="8" rx="2" fill="#FF85AB"/></svg>'},
+  {id:'plane',s:'<svg viewBox="0 0 32 32"><path d="M6 16 L24 8 L26 10 L18 16 L26 22 L24 24 L16 18 L8 22 L9 18 Z" fill="#80C8F0"/></svg>'},
+  {id:'gift',s:'<svg viewBox="0 0 32 32"><rect x="6" y="14" width="20" height="14" rx="3" fill="#FFB7C5"/><rect x="5" y="10" width="22" height="6" rx="2" fill="#FF85AB"/><rect x="14" y="10" width="4" height="18" fill="#FF6B9D"/><path d="M16 10 C16 10 12 6 10 8 C8 10 12 10 16 10Z" fill="#FF6B9D"/><path d="M16 10 C16 10 20 6 22 8 C24 10 20 10 16 10Z" fill="#FF6B9D"/></svg>'},
+  {id:'heart',s:'<svg viewBox="0 0 32 32"><path d="M16 26 C16 26 5 19 5 12 C5 8 8 6 11 6 C13 6 15 7 16 9 C17 7 19 6 21 6 C24 6 27 8 27 12 C27 19 16 26 16 26Z" fill="#FF85AB"/><path d="M16 24 C16 24 8 18 8 13 C8 11 10 10 12 10 C13.5 10 15 11 16 13 C17 11 18.5 10 20 10 C22 10 24 11 24 13 C24 18 16 24 16 24Z" fill="#FFB7C5"/></svg>'},
+  {id:'moon',s:'<svg viewBox="0 0 32 32"><path d="M20 6 C14 6 9 11 9 17 C9 23 14 28 20 28 C17 28 12 25 11 20 C10 15 13 9 20 6Z" fill="#C9B8F5"/><circle cx="22" cy="9" r="2" fill="#FFE066"/></svg>'},
+  {id:'sunrise',s:'<svg viewBox="0 0 32 32"><circle cx="16" cy="18" r="7" fill="#FFD700"/><line x1="16" y1="5" x2="16" y2="8" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/><line x1="6" y1="9" x2="8" y2="11" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/><line x1="26" y1="9" x2="24" y2="11" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/><line x1="4" y1="22" x2="28" y2="22" stroke="#FF9060" stroke-width="2" stroke-linecap="round"/></svg>'},
+  {id:'cat',s:'<svg viewBox="0 0 32 32"><ellipse cx="16" cy="19" rx="10" ry="9" fill="#F5C97A"/><polygon points="8,12 6,5 13,10" fill="#F5C97A"/><polygon points="24,12 26,5 19,10" fill="#F5C97A"/><ellipse cx="13" cy="18" rx="2" ry="2.5" fill="#7A5C30"/><ellipse cx="19" cy="18" rx="2" ry="2.5" fill="#7A5C30"/><ellipse cx="16" cy="21" rx="1.5" ry="1" fill="#FFB3B3"/><line x1="8" y1="21" x2="3" y2="20" stroke="#A07040" stroke-width="1" stroke-linecap="round"/><line x1="24" y1="21" x2="29" y2="20" stroke="#A07040" stroke-width="1" stroke-linecap="round"/></svg>'},
+  {id:'star',s:'<svg viewBox="0 0 32 32"><polygon points="16,4 19,13 28,13 21,19 24,28 16,22 8,28 11,19 4,13 13,13" fill="#FFD700"/></svg>'},
+  {id:'game',s:'<svg viewBox="0 0 32 32"><rect x="4" y="11" width="24" height="14" rx="6" fill="#9B84E8"/><rect x="8" y="17" width="6" height="2" rx="1" fill="#C9B8F5"/><rect x="10" y="15" width="2" height="6" rx="1" fill="#C9B8F5"/><circle cx="21" cy="16" r="1.5" fill="#FFB7C5"/><circle cx="24" cy="19" r="1.5" fill="#FFB7C5"/></svg>'},
+  {id:'camera',s:'<svg viewBox="0 0 32 32"><rect x="4" y="11" width="24" height="17" rx="4" fill="#80C8F0"/><path d="M12 11 L14 7 L18 7 L20 11Z" fill="#60A8D8"/><circle cx="16" cy="20" r="5" fill="#B0E0FF"/><circle cx="16" cy="20" r="3" fill="#60A8D8"/></svg>'},
+  {id:'leaf',s:'<svg viewBox="0 0 32 32"><path d="M16 28 C16 28 6 22 6 13 C6 7 10 4 16 4 C22 4 26 7 26 13 C26 22 16 28 16 28Z" fill="#7DC67A"/><path d="M16 28 L16 8" stroke="#5BA858" stroke-width="1.5" stroke-linecap="round"/></svg>'},
+  {id:'beer',s:'<svg viewBox="0 0 32 32"><rect x="8" y="12" width="14" height="16" rx="3" fill="#F5C97A"/><rect x="22" y="15" width="5" height="8" rx="2.5" fill="#E8B860"/><rect x="8" y="10" width="14" height="5" rx="2" fill="white" opacity="0.8"/></svg>'},
+];
+
+// Data
+var moodD={},mems=[],wishes=[],fights=[];
+
+// API helpers
+function apiGet(path,cb){
+  fetch(API+path).then(function(r){return r.json();}).then(cb).catch(function(){});
+}
+function apiPost(path,data,cb){
+  showSync();
+  fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(function(r){return r.json();}).then(function(r){hideSync();if(cb)cb(r);}).catch(function(){hideSync();});
+}
+function apiDel(path,cb){
+  showSync();
+  fetch(API+path,{method:'DELETE'}).then(function(){hideSync();if(cb)cb();}).catch(function(){hideSync();});
+}
+function showSync(){document.getElementById('syncInd').style.display='block';}
+function hideSync(){document.getElementById('syncInd').style.display='none';}
+
+function loadAll(cb){
+  var done=0;
+  function check(){done++;if(done===4&&cb)cb();}
+  apiGet('/moods',function(rows){
+    moodD={};
+    rows.forEach(function(r){moodD[r.date]=[r.mood_f,r.mood_m];});
+    check();
+  });
+  apiGet('/memories',function(rows){
+    mems=rows.map(function(r){return {id:r.id,date:r.date,title:r.title,icon:r.icon,note:r.note||''};});
+    check();
+  });
+  apiGet('/wishes',function(rows){
+    wishes=rows.map(function(r){return {id:r.id,title:r.title,cat:r.cat,date:r.date,done:r.done,doneDate:r.done_date||null};});
+    check();
+  });
+  apiGet('/fights',function(rows){
+    fights=rows.map(function(r){return {id:r.id,date:r.date,topics:r.topics?r.topics.split(','):[],fault:r.fault,resolved:r.resolved,score:r.score||0,note:r.note||''};});
+    check();
+  });
+}
+
+document.getElementById('memDate').value=tod;
+document.getElementById('wishDate').value=tod;
+document.getElementById('fightDate').value=tod;
+
+var cF=null,cM=null;
+function bGrid(arr,gid,gen){
+  var g=document.getElementById(gid);g.innerHTML='';
+  arr.forEach(function(m){
+    var b=document.createElement('div');
+    var sel=gen==='f'?cF:cM;
+    b.className='mbtn'+(sel===m.id?' s'+(gen==='f'?'f':'m2'):'');
+    b.innerHTML=ms(32,32,m.f);b.title=m.lb;
+    b.onclick=function(){
+      if(gen==='f'){cF=m.id;document.getElementById('preF').innerHTML=ms(40,40,m.f);document.getElementById('nameF').textContent=m.lb;}
+      else{cM=m.id;document.getElementById('preM').innerHTML=ms(40,40,m.f);document.getElementById('nameM').textContent=m.lb;}
+      bGrid(arr,gid,gen);
+    };
+    g.appendChild(b);
+  });
+}
+bGrid(MF,'gridF','f');bGrid(MM,'gridM','m');
+
+function showRes(){
+  var d=moodD[tod];if(!d)return;
+  var mf=MF.find(function(x){return x.id===d[0];}),mm=MM.find(function(x){return x.id===d[1];});
+  var box=document.getElementById('resBox');box.style.display='';
+  document.getElementById('resRows').innerHTML=
+    '<div class="res-row"><div style="width:30px;height:30px">'+(mf?ms(30,30,mf.f):'')+'</div><span class="res-lbl">怡廷</span><span class="res-mood">'+(mf?mf.lb:'')+'</span></div>'+
+    '<div class="res-row"><div style="width:30px;height:30px">'+(mm?ms(30,30,mm.f):'')+'</div><span class="res-lbl">福堯</span><span class="res-mood">'+(mm?mm.lb:'')+'</span></div>';
+}
+
+function saveMood(){
+  if(!cF||!cM)return;
+  apiPost('/moods',{date:tod,mood_f:cF,mood_m:cM},function(){
+    moodD[tod]=[cF,cM];ok('moodOk');showRes();renderCal();
+  });
+}
+
+var selMI=MI[0].id;
+var mp=document.getElementById('memPick');
+MI.forEach(function(ic){
+  var b=document.createElement('div');b.className='mem-btn'+(ic.id===selMI?' on':'');
+  b.innerHTML=ic.s.replace('<svg','<svg width="36" height="36"');
+  b.onclick=function(){selMI=ic.id;document.querySelectorAll('.mem-btn').forEach(function(x){x.classList.remove('on');});b.classList.add('on');};
+  mp.appendChild(b);
+});
+function getMI(id,sz){var ic=MI.find(function(x){return x.id===id;});return ic?ic.s.replace('<svg','<svg width="'+sz+'" height="'+sz+'"'):'';}
+
+function saveMemory(){
+  var t=document.getElementById('memTitle').value.trim();if(!t)return;
+  var rec={id:Date.now(),date:document.getElementById('memDate').value,title:t,icon:selMI,note:document.getElementById('memNote').value.trim()};
+  apiPost('/memories',rec,function(){
+    mems.unshift(rec);
+    document.getElementById('memTitle').value='';document.getElementById('memNote').value='';
+    ok('memOk');setTimeout(function(){goTo('home');renderCal();},1000);
+  });
+}
+
+function togWF(){var f=document.getElementById('wishForm');f.style.display=f.style.display==='none'?'':'none';}
+function saveWish(){
+  var t=document.getElementById('wishTitle').value.trim();if(!t)return;
+  var rec={id:Date.now(),title:t,cat:wCat,date:document.getElementById('wishDate').value,done:false,done_date:null};
+  apiPost('/wishes',rec,function(){
+    wishes.unshift({id:rec.id,title:rec.title,cat:rec.cat,date:rec.date,done:false,doneDate:null});
+    document.getElementById('wishTitle').value='';ok('wishOk');rwList();
+  });
+}
+function togW(id){
+  var w=wishes.find(function(x){return x.id===id;});if(!w)return;
+  w.done=!w.done;w.doneDate=w.done?tod:null;
+  apiPost('/wishes',{id:w.id,title:w.title,cat:w.cat,date:w.date,done:w.done,done_date:w.doneDate},function(){rwList();});
+}
+function rwList(){
+  var el=document.getElementById('wishList');
+  if(!wishes.length){el.innerHTML='<div class="empty">還沒有願望，快去許願！</div>';return;}
+  el.innerHTML=wishes.map(function(w){
+    var catSVG=WISH_CATS.find(function(c){return c.id===w.cat;});
+    var icon=catSVG?catSVG.svg.replace('<svg','<svg width="22" height="22"'):'';
+    return '<div class="wish-item"><div style="width:22px;height:22px;flex-shrink:0">'+icon+'</div><div class="wi"><div class="wn'+(w.done?' done':'')+'">'+w.title+'</div><div class="wd">'+w.date+(w.done?' → 完成 '+(w.doneDate||''):'')+'</div></div><span class="wck" onclick="togW('+w.id+')">'+(w.done?'✅':'⬜')+'</span></div>';
+  }).join('');
+}
+
+var fT=[],fF=null,fR=null,fS=0;
+var fst=document.getElementById('fStars');
+for(var i=1;i<=5;i++){(function(n){var s=document.createElement('span');s.innerHTML='<svg width="22" height="22" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/><path d="M16 26 C13 21 11 18 12 15 C13 12 15 11 16 13 C17 11 19 12 20 15 C21 18 19 21 16 26Z" fill="#FFD700"/></svg>';s.style.cssText='cursor:pointer;opacity:0.25;display:inline-flex';s.onclick=function(){fS=n;Array.from(fst.children).forEach(function(x,j){x.style.opacity=j<n?'1':'0.25';});};fst.appendChild(s);})(i);}
+function togT(btn,v){if(fT.indexOf(v)>-1){fT=fT.filter(function(x){return x!==v;});btn.classList.remove('on');}else{fT.push(v);btn.classList.add('on');}}
+function setSi(btn,f,v){if(f==='fault')fF=v;else fR=v;document.querySelectorAll('[onclick*="\''+f+'\'"]').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');}
+function togFF(){var f=document.getElementById('fightForm');f.style.display=f.style.display==='none'?'':'none';}
+function saveFight(){
+  var rec={id:Date.now(),date:document.getElementById('fightDate').value,topics:fT.join(','),fault:fF,resolved:fR,score:fS,note:document.getElementById('fightNote').value.trim()};
+  apiPost('/fights',rec,function(){
+    fights.unshift({id:rec.id,date:rec.date,topics:fT.slice(),fault:fF,resolved:fR,score:fS,note:rec.note});
+    document.getElementById('fightNote').value='';fT=[];fF=null;fR=null;fS=0;
+    document.querySelectorAll('#fightForm .chip').forEach(function(b){b.classList.remove('on');});
+    Array.from(fst.children).forEach(function(x){x.style.opacity='0.25';});
+    ok('fightOk');rfList();
+  });
+}
+var rL={yes:'已解決',no:'未解決',partial:'部分解決'};
+var fSVG='<svg width="14" height="14" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/><path d="M16 26 C13 21 11 18 12 15 C13 12 15 11 16 13 C17 11 19 12 20 15 C21 18 19 21 16 26Z" fill="#FFD700"/></svg>';
+function rfList(){
+  var el=document.getElementById('fightList');
+  if(!fights.length){el.innerHTML='<div class="empty">沒有吵架紀錄，很好！❤️</div>';return;}
+  el.innerHTML=fights.map(function(f){
+    return '<div class="fi"><div class="ft"><span class="ftopic">'+(f.topics.length?f.topics.join('、'):'未分類')+'</span><span style="display:flex">'+Array(f.score||0).fill(fSVG).join('')+'</span></div><div class="ftags">'+(f.fault?'<span class="ftag tp">錯：'+f.fault+'</span>':'')+(f.resolved?'<span class="ftag '+(f.resolved==='yes'?'tg':'tgr')+'">'+(rL[f.resolved]||'')+'</span>':'')+'</div><div style="font-size:11px;color:#bbb;margin-top:3px">'+f.date+'</div></div>';
+  }).join('');
+}
+
+var calMS='<svg width="10" height="10" viewBox="0 0 32 32"><polygon points="16,4 19,13 28,13 21,19 24,28 16,22 8,28 11,19 4,13 13,13" fill="#FFD700"/></svg>';
+var calFS='<svg width="10" height="10" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/></svg>';
+
+function chMo(d){vM+=d;if(vM>11){vM=0;vY++;}if(vM<0){vM=11;vY--;}document.getElementById('ddBox').style.display='none';renderCal();}
+
+function renderCal(){
+  document.getElementById('moLbl').textContent=vY+' 年 '+(vM+1)+' 月';
+  var g=document.getElementById('calGrid');g.innerHTML='';
+  ['日','一','二','三','四','五','六'].forEach(function(d){var h=document.createElement('div');h.className='dh';h.textContent=d;g.appendChild(h);});
+  var first=new Date(vY,vM,1).getDay(),total=new Date(vY,vM+1,0).getDate();
+  for(var i=0;i<first;i++)g.appendChild(document.createElement('div'));
+  for(var d=1;d<=total;d++){
+    var key=vY+'-'+String(vM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var isTod=vY===T.getFullYear()&&vM===T.getMonth()&&d===T.getDate();
+    var dm=moodD[key],dmem=mems.filter(function(m){return m.date===key;}),df=fights.filter(function(f){return f.date===key;});
+    var has=dm||dmem.length||df.length;
+    var cell=document.createElement('div');cell.className='dc'+(isTod?' today':'')+(has?' has-data':'');
+    var dn=document.createElement('div');dn.className='dn';dn.textContent=d;cell.appendChild(dn);
+    var ic=document.createElement('div');ic.className='dc-icons';
+    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(10,10,mf.f);if(mm)ic.innerHTML+=ms(10,10,mm.f);}
+    if(dmem.length)ic.innerHTML+=calMS;
+    if(df.length)ic.innerHTML+=calFS;
+    cell.appendChild(ic);
+    (function(k,day){cell.onclick=function(){showDD(k,day);};})(key,d);
+    g.appendChild(cell);
+  }
+}
+
+function showDD(key,d){
+  var box=document.getElementById('ddBox');
+  var dm=moodD[key],dmem=mems.filter(function(m){return m.date===key;}),df=fights.filter(function(f){return f.date===key;});
+  if(!dm&&!dmem.length&&!df.length){box.style.display='none';return;}
+  var html='<div class="day-detail"><div class="dd-title">'+vY+'/'+(vM+1)+'/'+d+'</div>';
+  if(dm){var mf=MF.find(function(m){return m.id===dm[0];}),mm=MM.find(function(m){return m.id===dm[1];});html+='<div class="dd-row"><div class="dd-ic">'+(mf?ms(22,22,mf.f):'')+'</div><div class="dd-info"><div class="dd-lbl">怡廷</div><div class="dd-val">'+(mf?mf.lb:'')+'</div></div></div><div class="dd-row"><div class="dd-ic">'+(mm?ms(22,22,mm.f):'')+'</div><div class="dd-info"><div class="dd-lbl">福堯</div><div class="dd-val">'+(mm?mm.lb:'')+'</div></div></div>';}
+  dmem.forEach(function(m){html+='<div class="dd-row"><div class="dd-ic">'+getMI(m.icon,22)+'</div><div class="dd-info"><div class="dd-lbl">回憶</div><div class="dd-val">'+m.title+'</div>'+(m.note?'<div style="font-size:11px;color:#bbb">'+m.note+'</div>':'')+'</div></div>';});
+  df.forEach(function(f){html+='<div class="dd-row"><div class="dd-ic"><svg width="22" height="22" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/><path d="M16 26 C13 21 11 18 12 15 C13 12 15 11 16 13 C17 11 19 12 20 15 C21 18 19 21 16 26Z" fill="#FFD700"/></svg></div><div class="dd-info"><div class="dd-lbl">吵架</div><div class="dd-val">'+(f.topics.join('、')||'未分類')+'</div></div></div>';});
+  html+='</div>';box.innerHTML=html;box.style.display='';
+}
+
+function goTo(p){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('s-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  if(p==='wish')rwList();
+  if(p==='fight')rfList();
+  if(p==='home')renderCal();
+  if(p==='mood'&&moodD[tod]){var d=moodD[tod];cF=d[0];cM=d[1];var mf=MF.find(function(x){return x.id===cF;}),mm=MM.find(function(x){return x.id===cM;});if(mf){document.getElementById('preF').innerHTML=ms(40,40,mf.f);document.getElementById('nameF').textContent=mf.lb;}if(mm){document.getElementById('preM').innerHTML=ms(40,40,mm.f);document.getElementById('nameM').textContent=mm.lb;}bGrid(MF,'gridF','f');bGrid(MM,'gridM','m');showRes();}
+}
+function ok(id){var el=document.getElementById(id);el.style.display='block';setTimeout(function(){el.style.display='none';},2000);}
+
+// Init
+loadAll(function(){renderCal();});
+</script>
+</body>
+</html>
