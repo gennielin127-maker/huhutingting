@@ -477,8 +477,8 @@ function rfList(){
   }).join('');
 }
 
-var calMS='<svg width="13" height="13" viewBox="0 0 32 32"><polygon points="16,4 19,13 28,13 21,19 24,28 16,22 8,28 11,19 4,13 13,13" fill="#FFD700"/></svg>';
-var calFS='<svg width="13" height="13" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/></svg>';
+var calMS='<svg width="14" height="13" viewBox="0 0 32 32"><polygon points="16,4 19,13 28,13 21,19 24,28 16,22 8,28 11,19 4,13 13,13" fill="#FFD700"/></svg>';
+var calFS='<svg width="14" height="13" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/></svg>';
 
 function chMo(d){vM+=d;if(vM>11){vM=0;vY++;}if(vM<0){vM=11;vY--;}document.getElementById('ddBox').style.display='none';renderCal();}
 
@@ -496,7 +496,7 @@ function renderCal(){
     var cell=document.createElement('div');cell.className='dc'+(isTod?' today':'')+(has?' has-data':'');
     var dn=document.createElement('div');dn.className='dn';dn.textContent=d;cell.appendChild(dn);
     var ic=document.createElement('div');ic.className='dc-icons';
-    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(13,13,mf.f);if(mm)ic.innerHTML+=ms(13,13,mm.f);}
+    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(16,16,mf.f);if(mm)ic.innerHTML+=ms(16,16,mm.f);}
     if(dmem.length)ic.innerHTML+=calMS;
     if(df.length)ic.innerHTML+=calFS;
     cell.appendChild(ic);
