@@ -247,7 +247,7 @@ var API = 'https://huhutingting-api.onrender.com';
 
 var S=new Date('2025-01-30'),T=new Date();T.setHours(0,0,0,0);
 var tod=T.getFullYear()+'-'+String(T.getMonth()+1).padStart(2,'0')+'-'+String(T.getDate()).padStart(2,'0');
-var vY=T.getFullYear(),vM=T.getMonth();
+var now=new Date();var vY=now.getFullYear(),vM=now.getMonth();
 document.getElementById('daysNum').textContent=Math.floor((T-S)/86400000);
 var nA=new Date(S);nA.setFullYear(T.getFullYear());
 if(nA<T)nA.setFullYear(T.getFullYear()+1);
@@ -516,7 +516,7 @@ function renderCal(){
     var cell=document.createElement('div');cell.className='dc'+(isTod?' today':'')+(has?' has-data':'');
     var dn=document.createElement('div');dn.className='dn';dn.textContent=d;cell.appendChild(dn);
     var ic=document.createElement('div');ic.className='dc-icons';
-    if(dm){var mf=dm[0]?MF.find(function(m){return m.id===dm[0];}):null;var mm=dm[1]?MM.find(function(m){return m.id===dm[1];}):null;if(mf)ic.innerHTML+=ms(23,23,mf.f);if(mm)ic.innerHTML+=ms(23,23,mm.f);}
+    if(dm){var mf=dm[0]?MF.find(function(m){return m.id===dm[0];}):null;var mm=dm[1]?MM.find(function(m){return m.id===dm[1];}):null;if(mf)ic.innerHTML+=ms(15,15,mf.f);if(mm)ic.innerHTML+=ms(15,15,mm.f);}
     if(dmem.length)ic.innerHTML+=calMS;
     if(df.length)ic.innerHTML+=calFS;
     cell.appendChild(ic);
