@@ -355,7 +355,7 @@ function loadAll(cb){
   function check(){done++;if(done===4&&cb)cb();}
   apiGet('/moods',function(rows){
     moodD={};
-    rows.forEach(function(r){moodD[r.date]=[r.mood_f,r.mood_m];});
+    rows.forEach(function(r){moodD[r.date]=[r.mood_f||null,r.mood_m||null];});
     check();
   });
   apiGet('/memories',function(rows){
@@ -512,11 +512,11 @@ function renderCal(){
     var key=vY+'-'+String(vM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var isTod=vY===T.getFullYear()&&vM===T.getMonth()&&d===T.getDate();
     var dm=moodD[key],dmem=mems.filter(function(m){return m.date===key;}),df=fights.filter(function(f){return f.date===key;});
-    var has=dm||dmem.length||df.length;
+    var hasMood=dm&&(dm[0]||dm[1]);var has=hasMood||dmem.length||df.length;
     var cell=document.createElement('div');cell.className='dc'+(isTod?' today':'')+(has?' has-data':'');
     var dn=document.createElement('div');dn.className='dn';dn.textContent=d;cell.appendChild(dn);
     var ic=document.createElement('div');ic.className='dc-icons';
-    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(23,23,mf.f);if(mm)ic.innerHTML+=ms(23,23,mm.f);}
+    if(dm){var mf=dm[0]?MF.find(function(m){return m.id===dm[0];}):null;var mm=dm[1]?MM.find(function(m){return m.id===dm[1];}):null;if(mf)ic.innerHTML+=ms(23,23,mf.f);if(mm)ic.innerHTML+=ms(23,23,mm.f);}
     if(dmem.length)ic.innerHTML+=calMS;
     if(df.length)ic.innerHTML+=calFS;
     cell.appendChild(ic);
