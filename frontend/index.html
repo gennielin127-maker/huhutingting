@@ -140,18 +140,21 @@ textarea { resize: none; height: 64px; }
 
   <div class="screen" id="s-mood">
     <div class="ph"><span class="pt">今日心情</span></div>
-    <div class="card">
+    <div class="card" style="margin-bottom:10px">
       <div class="person-row"><span class="pname">林怡廷</span><span class="badge bf">女生版</span></div>
       <div class="prev-row"><div id="preF" style="width:40px;height:40px"></div><span class="prev-lbl" id="nameF">請選心情</span></div>
       <div class="mgrid" id="gridF"></div>
-      <div class="divider"></div>
+      <button class="sbtn" style="margin-top:8px" onclick="saveMoodF()">記錄怡廷的心情</button>
+      <div class="ok-msg" id="moodOkF">已記錄！</div>
+    </div>
+    <div class="card">
       <div class="person-row"><span class="pname">胡福堯</span><span class="badge bm">男生版</span></div>
       <div class="prev-row"><div id="preM" style="width:40px;height:40px"></div><span class="prev-lbl" id="nameM">請選心情</span></div>
       <div class="mgrid" id="gridM"></div>
-      <button class="sbtn" style="margin-top:8px" onclick="saveMood()">記錄今天心情</button>
-      <div class="ok-msg" id="moodOk">已記錄！</div>
-      <div class="res-box" id="resBox"><div id="resRows"></div></div>
+      <button class="sbtn" style="margin-top:8px" onclick="saveMoodM()">記錄福堯的心情</button>
+      <div class="ok-msg" id="moodOkM">已記錄！</div>
     </div>
+    <div class="card" id="resBox" style="display:none"><div id="resRows"></div></div>
   </div>
 
   <div class="screen" id="s-memory">
@@ -392,20 +395,37 @@ function bGrid(arr,gid,gen){
 bGrid(MF,'gridF','f');bGrid(MM,'gridM','m');
 
 function showRes(){
-  var d=moodD[tod];if(!d)return;
-  var mf=MF.find(function(x){return x.id===d[0];}),mm=MM.find(function(x){return x.id===d[1];});
-  var box=document.getElementById('resBox');box.style.display='';
-  document.getElementById('resRows').innerHTML=
-    '<div class="res-row"><div style="width:30px;height:30px">'+(mf?ms(30,30,mf.f):'')+'</div><span class="res-lbl">怡廷</span><span class="res-mood">'+(mf?mf.lb:'')+'</span></div>'+
-    '<div class="res-row"><div style="width:30px;height:30px">'+(mm?ms(30,30,mm.f):'')+'</div><span class="res-lbl">福堯</span><span class="res-mood">'+(mm?mm.lb:'')+'</span></div>';
+  var d=moodD[tod];
+  var box=document.getElementById('resBox');
+  if(!d||(!d[0]&&!d[1])){box.style.display='none';return;}
+  var mf=d[0]?MF.find(function(x){return x.id===d[0];}):null;
+  var mm=d[1]?MM.find(function(x){return x.id===d[1];}):null;
+  box.style.display='';
+  var html='';
+  if(mf)html+='<div class="res-row"><div style="width:30px;height:30px">'+ms(30,30,mf.f)+'</div><span class="res-lbl">怡廷</span><span class="res-mood">'+mf.lb+'</span></div>';
+  if(mm)html+='<div class="res-row"><div style="width:30px;height:30px">'+ms(30,30,mm.f)+'</div><span class="res-lbl">福堯</span><span class="res-mood">'+mm.lb+'</span></div>';
+  document.getElementById('resRows').innerHTML=html;
 }
 
-function saveMood(){
-  if(!cF||!cM)return;
-  apiPost('/moods',{date:tod,mood_f:cF,mood_m:cM},function(){
-    moodD[tod]=[cF,cM];ok('moodOk');showRes();renderCal();
+function saveMoodF(){
+  if(!cF)return;
+  var cur=moodD[tod]||[null,null];
+  apiPost('/moods',{date:tod,mood_f:cF,mood_m:cur[1]||''},function(){
+    if(!moodD[tod])moodD[tod]=[cF,cur[1]||null];
+    else moodD[tod][0]=cF;
+    ok('moodOkF');showRes();renderCal();
   });
 }
+function saveMoodM(){
+  if(!cM)return;
+  var cur=moodD[tod]||[null,null];
+  apiPost('/moods',{date:tod,mood_f:cur[0]||'',mood_m:cM},function(){
+    if(!moodD[tod])moodD[tod]=[cur[0]||null,cM];
+    else moodD[tod][1]=cM;
+    ok('moodOkM');showRes();renderCal();
+  });
+}
+function saveMood(){saveMoodF();}
 
 var selMI=MI[0].id;
 var mp=document.getElementById('memPick');
