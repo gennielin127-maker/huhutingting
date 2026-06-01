@@ -496,7 +496,7 @@ function renderCal(){
     var cell=document.createElement('div');cell.className='dc'+(isTod?' today':'')+(has?' has-data':'');
     var dn=document.createElement('div');dn.className='dn';dn.textContent=d;cell.appendChild(dn);
     var ic=document.createElement('div');ic.className='dc-icons';
-    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(20,20,mf.f);if(mm)ic.innerHTML+=ms(20,20,mm.f);}
+    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(23,23,mf.f);if(mm)ic.innerHTML+=ms(23,23,mm.f);}
     if(dmem.length)ic.innerHTML+=calMS;
     if(df.length)ic.innerHTML+=calFS;
     cell.appendChild(ic);
