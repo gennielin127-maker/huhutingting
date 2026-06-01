@@ -54,8 +54,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-se
 .lbl { font-size: 12px; color: #999; margin-bottom: 5px; display: block; }
 input[type=text], input[type=date], textarea {
   width: 100%; border: 1px solid #f0e0e8; border-radius: 10px;
-  padding: 8px 12px; font-size: 13px; font-family: inherit;
+  padding: 8px 10px; font-size: 13px; font-family: inherit;
   background: #fdf8fa; color: #333; outline: none;
+  max-width: 100%; box-sizing: border-box;
 }
 input[type=text]:focus, input[type=date]:focus, textarea:focus { border-color: #ED93B1; }
 textarea { resize: none; height: 64px; }
@@ -476,8 +477,8 @@ function rfList(){
   }).join('');
 }
 
-var calMS='<svg width="10" height="10" viewBox="0 0 32 32"><polygon points="16,4 19,13 28,13 21,19 24,28 16,22 8,28 11,19 4,13 13,13" fill="#FFD700"/></svg>';
-var calFS='<svg width="10" height="10" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/></svg>';
+var calMS='<svg width="13" height="13" viewBox="0 0 32 32"><polygon points="16,4 19,13 28,13 21,19 24,28 16,22 8,28 11,19 4,13 13,13" fill="#FFD700"/></svg>';
+var calFS='<svg width="13" height="13" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/></svg>';
 
 function chMo(d){vM+=d;if(vM>11){vM=0;vY++;}if(vM<0){vM=11;vY--;}document.getElementById('ddBox').style.display='none';renderCal();}
 
@@ -495,7 +496,7 @@ function renderCal(){
     var cell=document.createElement('div');cell.className='dc'+(isTod?' today':'')+(has?' has-data':'');
     var dn=document.createElement('div');dn.className='dn';dn.textContent=d;cell.appendChild(dn);
     var ic=document.createElement('div');ic.className='dc-icons';
-    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(10,10,mf.f);if(mm)ic.innerHTML+=ms(10,10,mm.f);}
+    if(dm){var mf=MF.find(function(m){return m.id===dm[0];});var mm=MM.find(function(m){return m.id===dm[1];});if(mf)ic.innerHTML+=ms(13,13,mf.f);if(mm)ic.innerHTML+=ms(13,13,mm.f);}
     if(dmem.length)ic.innerHTML+=calMS;
     if(df.length)ic.innerHTML+=calFS;
     cell.appendChild(ic);
@@ -509,7 +510,7 @@ function showDD(key,d){
   var dm=moodD[key],dmem=mems.filter(function(m){return m.date===key;}),df=fights.filter(function(f){return f.date===key;});
   if(!dm&&!dmem.length&&!df.length){box.style.display='none';return;}
   var html='<div class="day-detail"><div class="dd-title">'+vY+'/'+(vM+1)+'/'+d+'</div>';
-  if(dm){var mf=MF.find(function(m){return m.id===dm[0];}),mm=MM.find(function(m){return m.id===dm[1];});html+='<div class="dd-row"><div class="dd-ic">'+(mf?ms(22,22,mf.f):'')+'</div><div class="dd-info"><div class="dd-lbl">怡廷</div><div class="dd-val">'+(mf?mf.lb:'')+'</div></div></div><div class="dd-row"><div class="dd-ic">'+(mm?ms(22,22,mm.f):'')+'</div><div class="dd-info"><div class="dd-lbl">福堯</div><div class="dd-val">'+(mm?mm.lb:'')+'</div></div></div>';}
+  if(dm){var mf=MF.find(function(m){return m.id===dm[0];}),mm=MM.find(function(m){return m.id===dm[1];});if(mf)html+='<div class="dd-row"><div class="dd-ic">'+ms(22,22,mf.f)+'</div><div class="dd-info"><div class="dd-lbl">怡廷</div><div class="dd-val">'+mf.lb+'</div></div></div>';if(mm)html+='<div class="dd-row"><div class="dd-ic">'+ms(22,22,mm.f)+'</div><div class="dd-info"><div class="dd-lbl">福堯</div><div class="dd-val">'+mm.lb+'</div></div></div>';}
   dmem.forEach(function(m){html+='<div class="dd-row"><div class="dd-ic">'+getMI(m.icon,22)+'</div><div class="dd-info"><div class="dd-lbl">回憶</div><div class="dd-val">'+m.title+'</div>'+(m.note?'<div style="font-size:11px;color:#bbb">'+m.note+'</div>':'')+'</div></div>';});
   df.forEach(function(f){html+='<div class="dd-row"><div class="dd-ic"><svg width="22" height="22" viewBox="0 0 32 32"><path d="M16 28 C10 24 6 20 7 14 C8 9 11 7 13 8 C13 5 15 3 16 3 C17 3 19 5 19 8 C21 7 24 9 25 14 C26 20 22 24 16 28Z" fill="#FF8C42"/><path d="M16 26 C13 21 11 18 12 15 C13 12 15 11 16 13 C17 11 19 12 20 15 C21 18 19 21 16 26Z" fill="#FFD700"/></svg></div><div class="dd-info"><div class="dd-lbl">吵架</div><div class="dd-val">'+(f.topics.join('、')||'未分類')+'</div></div></div>';});
   html+='</div>';box.innerHTML=html;box.style.display='';
@@ -528,6 +529,7 @@ function goTo(p){
 function ok(id){var el=document.getElementById(id);el.style.display='block';setTimeout(function(){el.style.display='none';},2000);}
 
 // Init
+renderCal();
 loadAll(function(){renderCal();});
 </script>
 </body>
