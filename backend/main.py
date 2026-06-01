@@ -14,7 +14,12 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=False,
 )
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
 
 def get_db():
     return psycopg2.connect(os.environ["DATABASE_URL"], cursor_factory=RealDictCursor)
@@ -85,11 +90,17 @@ def get_moods():
 def save_mood(data: MoodIn):
     conn = get_db()
     cur = conn.cursor()
+    mf = data.mood_f if data.mood_f else None
+    mm = data.mood_m if data.mood_m else None
+    # Only update the field that is provided, keep existing value for the other
     cur.execute("""
         INSERT INTO moods (date, mood_f, mood_m, updated_at)
         VALUES (%s, %s, %s, NOW())
-        ON CONFLICT (date) DO UPDATE SET mood_f=EXCLUDED.mood_f, mood_m=EXCLUDED.mood_m, updated_at=NOW()
-    """, (data.date, data.mood_f, data.mood_m))
+        ON CONFLICT (date) DO UPDATE SET 
+            mood_f = CASE WHEN EXCLUDED.mood_f IS NOT NULL THEN EXCLUDED.mood_f ELSE moods.mood_f END,
+            mood_m = CASE WHEN EXCLUDED.mood_m IS NOT NULL THEN EXCLUDED.mood_m ELSE moods.mood_m END,
+            updated_at = NOW()
+    """, (data.date, mf, mm))
     conn.commit(); cur.close(); conn.close()
     return {"ok": True}
 
