@@ -56,8 +56,9 @@ input[type=text], input[type=date], textarea {
   width: 100%; border: 1px solid #f0e0e8; border-radius: 10px;
   padding: 8px 10px; font-size: 13px; font-family: inherit;
   background: #fdf8fa; color: #333; outline: none;
-  max-width: 100%; box-sizing: border-box;
+  max-width: 100%; box-sizing: border-box; display: block;
 }
+input[type=date] { -webkit-appearance: none; appearance: none; text-align: left; }
 input[type=text]:focus, input[type=date]:focus, textarea:focus { border-color: #ED93B1; }
 textarea { resize: none; height: 64px; }
 .chips { display: flex; flex-wrap: wrap; gap: 5px; }
