@@ -543,13 +543,13 @@ function goTo(p){
   document.getElementById('nav-'+p).classList.add('active');
   if(p==='wish')rwList();
   if(p==='fight')rfList();
-  if(p==='home')renderCal();
+  if(p==='home'){loadAll(function(){renderCal();});}
   if(p==='mood'&&moodD[tod]){var d=moodD[tod];cF=d[0];cM=d[1];var mf=MF.find(function(x){return x.id===cF;}),mm=MM.find(function(x){return x.id===cM;});if(mf){document.getElementById('preF').innerHTML=ms(40,40,mf.f);document.getElementById('nameF').textContent=mf.lb;}if(mm){document.getElementById('preM').innerHTML=ms(40,40,mm.f);document.getElementById('nameM').textContent=mm.lb;}bGrid(MF,'gridF','f');bGrid(MM,'gridM','m');showRes();}
 }
 function ok(id){var el=document.getElementById(id);el.style.display='block';setTimeout(function(){el.style.display='none';},2000);}
 
 // Init
-renderCal();
+document.getElementById('calGrid').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;color:#D4537E;font-size:13px">載入中...</div>';
 loadAll(function(){renderCal();});
 </script>
 </body>
