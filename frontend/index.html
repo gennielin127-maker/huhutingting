@@ -246,7 +246,7 @@ textarea { resize: none; height: 64px; }
 var API = 'https://huhutingting-api.onrender.com';
 
 var S=new Date('2025-01-30'),T=new Date();T.setHours(0,0,0,0);
-var tod=T.toISOString().split('T')[0];
+var tod=T.getFullYear()+'-'+String(T.getMonth()+1).padStart(2,'0')+'-'+String(T.getDate()).padStart(2,'0');
 var vY=T.getFullYear(),vM=T.getMonth();
 document.getElementById('daysNum').textContent=Math.floor((T-S)/86400000);
 var nA=new Date(S);nA.setFullYear(T.getFullYear());
